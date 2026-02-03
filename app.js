@@ -46,7 +46,7 @@ class SolarChecklist {
         const percentage = (checked / total) * 100;
 
         document.getElementById('progressFill').style.width = `${percentage}%`;
-        document.getElementById('progressText').textContent = `${checked}/${total} 完成`;
+        document.getElementById('progressText').textContent = `${checked}/${total} completed`;
     }
 
     handlePhotos(event, type) {
@@ -205,7 +205,7 @@ class SolarChecklist {
         localStorage.setItem('solarChecklist_history', JSON.stringify(history));
         localStorage.setItem('solarChecklist_current', JSON.stringify(data));
         
-        this.showToast('✅ 已保存');
+        this.showToast('✅ Saved');
     }
 
     autoSave() {
@@ -221,7 +221,7 @@ class SolarChecklist {
     }
 
     newSession() {
-        if (confirm('确定要新建检查单吗？当前数据将被保存。')) {
+        if (confirm('Start a new checklist? Current data will be saved.')) {
             this.save();
             this.currentId = null;
             this.photos = { roof: [], electrical: [], battery: [] };
@@ -237,7 +237,7 @@ class SolarChecklist {
             });
             localStorage.removeItem('solarChecklist_current');
             this.updateProgress();
-            this.showToast('📝 已新建');
+            this.showToast('📝 New checklist started');
         }
     }
 
@@ -254,20 +254,20 @@ class SolarChecklist {
             container.innerHTML = `
                 <div class="empty-state">
                     <span>📭</span>
-                    <p>暂无历史记录</p>
+                    <p>No history yet</p>
                 </div>
             `;
         } else {
             container.innerHTML = history.map(item => `
                 <div class="history-item">
                     <div class="history-info">
-                        <h4>${item.customer?.name || '未命名客户'}</h4>
-                        <p>${item.customer?.address || '无地址'}</p>
-                        <p>${new Date(item.timestamp).toLocaleString('zh-CN')}</p>
+                        <h4>${item.customer?.name || 'Unnamed Customer'}</h4>
+                        <p>${item.customer?.address || 'No address'}</p>
+                        <p>${new Date(item.timestamp).toLocaleString('en-AU')}</p>
                     </div>
                     <div class="history-actions">
-                        <button class="btn-load" onclick="app.loadFromHistory('${item.id}')">加载</button>
-                        <button class="btn-delete" onclick="app.deleteFromHistory('${item.id}')">删除</button>
+                        <button class="btn-load" onclick="app.loadFromHistory('${item.id}')">Load</button>
+                        <button class="btn-delete" onclick="app.deleteFromHistory('${item.id}')">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -287,17 +287,17 @@ class SolarChecklist {
             this.setData(item);
             localStorage.setItem('solarChecklist_current', JSON.stringify(item));
             this.hideHistory();
-            this.showToast('✅ 已加载');
+            this.showToast('✅ Loaded');
         }
     }
 
     deleteFromHistory(id) {
-        if (confirm('确定要删除这条记录吗？')) {
+        if (confirm('Delete this record?')) {
             let history = this.getHistory();
             history = history.filter(h => h.id !== id);
             localStorage.setItem('solarChecklist_history', JSON.stringify(history));
             this.showHistory();
-            this.showToast('🗑️ 已删除');
+            this.showToast('🗑️ Deleted');
         }
     }
 
@@ -316,7 +316,7 @@ class SolarChecklist {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        this.showToast('📤 已导出');
+        this.showToast('📤 Exported');
     }
 
     generateReport(data) {
@@ -325,44 +325,44 @@ class SolarChecklist {
             '     SOLAR SITE VISIT REPORT',
             '========================================',
             '',
-            `日期: ${new Date(data.timestamp).toLocaleString('zh-CN')}`,
+            `Date: ${new Date(data.timestamp).toLocaleString('en-AU')}`,
             '',
-            '【客户信息】',
-            `姓名: ${data.customer?.name || '-'}`,
-            `地址: ${data.customer?.address || '-'}`,
-            `电话: ${data.customer?.phone || '-'}`,
-            `预约时间: ${data.customer?.appointmentTime || '-'}`,
+            '【CUSTOMER INFORMATION】',
+            `Name: ${data.customer?.name || '-'}`,
+            `Address: ${data.customer?.address || '-'}`,
+            `Phone: ${data.customer?.phone || '-'}`,
+            `Appointment: ${data.customer?.appointmentTime || '-'}`,
             '',
-            '【屋顶评估】',
-            `类型: ${this.translateValue('roofType', data.roof?.type)}`,
-            `朝向: ${this.translateValue('orientation', data.roof?.orientation)}`,
-            `角度: ${data.roof?.angle || '-'}`,
-            `面积: ${data.roof?.area ? data.roof.area + ' m²' : '-'}`,
+            '【ROOF ASSESSMENT】',
+            `Type: ${this.translateValue('roofType', data.roof?.type)}`,
+            `Orientation: ${this.translateValue('orientation', data.roof?.orientation)}`,
+            `Pitch: ${data.roof?.angle || '-'}`,
+            `Area: ${data.roof?.area ? data.roof.area + ' m²' : '-'}`,
             '',
-            '【电气评估】',
-            `电网类型: ${this.translateValue('gridType', data.electrical?.gridType)}`,
-            `电表型号: ${data.electrical?.meterModel || '-'}`,
-            `配电箱容量: ${data.electrical?.panelCapacity || '-'}`,
+            '【ELECTRICAL ASSESSMENT】',
+            `Grid Type: ${this.translateValue('gridType', data.electrical?.gridType)}`,
+            `Meter Model: ${data.electrical?.meterModel || '-'}`,
+            `Switchboard Capacity: ${data.electrical?.panelCapacity || '-'}`,
             '',
-            '【电池安装】',
-            `位置: ${this.translateValue('batteryLocation', data.battery?.location)}`,
+            '【BATTERY INSTALLATION】',
+            `Location: ${this.translateValue('batteryLocation', data.battery?.location)}`,
             '',
-            '【客户需求】',
-            `月均用电: ${data.requirements?.monthlyUsage || '-'}`,
-            `高峰时段: ${data.requirements?.peakHours || '-'}`,
-            `特殊设备: ${[
-                data.requirements?.hasEV && 'EV充电器',
-                data.requirements?.hasPool && '泳池泵',
-                data.requirements?.hasAC && '中央空调'
-            ].filter(Boolean).join(', ') || '无'}`,
-            `预算: ${this.translateValue('budget', data.requirements?.budget)}`,
-            `期望安装时间: ${data.requirements?.installTime || '-'}`,
+            '【CUSTOMER REQUIREMENTS】',
+            `Monthly Usage: ${data.requirements?.monthlyUsage || '-'}`,
+            `Peak Hours: ${data.requirements?.peakHours || '-'}`,
+            `Special Equipment: ${[
+                data.requirements?.hasEV && 'EV Charger',
+                data.requirements?.hasPool && 'Pool Pump',
+                data.requirements?.hasAC && 'Ducted A/C'
+            ].filter(Boolean).join(', ') || 'None'}`,
+            `Budget: ${this.translateValue('budget', data.requirements?.budget)}`,
+            `Installation Timeframe: ${data.requirements?.installTime || '-'}`,
             '',
-            '【备注】',
-            data.notes || '无',
+            '【NOTES】',
+            data.notes || 'None',
             '',
             '========================================',
-            `照片数量: 屋顶(${data.photos?.roof?.length || 0}) 电气(${data.photos?.electrical?.length || 0}) 电池(${data.photos?.battery?.length || 0})`,
+            `Photos: Roof(${data.photos?.roof?.length || 0}) Electrical(${data.photos?.electrical?.length || 0}) Battery(${data.photos?.battery?.length || 0})`,
             '========================================',
         ];
 
@@ -371,11 +371,11 @@ class SolarChecklist {
 
     translateValue(type, value) {
         const translations = {
-            roofType: { tile: '瓦片', metal: '金属', concrete: '混凝土', other: '其他' },
-            orientation: { north: '北', east: '东', west: '西', south: '南', mixed: '混合' },
-            gridType: { single: '单相', three: '三相' },
-            batteryLocation: { garage: '车库', exterior: '外墙', interior: '室内', other: '其他' },
-            budget: { '5-10k': '$5,000-$10,000', '10-15k': '$10,000-$15,000', '15-20k': '$15,000-$20,000', '20k+': '$20,000+', flexible: '灵活' }
+            roofType: { tile: 'Tile', metal: 'Metal / Colorbond', concrete: 'Concrete', other: 'Other' },
+            orientation: { north: 'North', east: 'East', west: 'West', south: 'South', mixed: 'Mixed' },
+            gridType: { single: 'Single Phase', three: 'Three Phase' },
+            batteryLocation: { garage: 'Garage', exterior: 'Exterior Wall', interior: 'Interior', other: 'Other' },
+            budget: { '5-10k': '$5,000-$10,000', '10-15k': '$10,000-$15,000', '15-20k': '$15,000-$20,000', '20k+': '$20,000+', flexible: 'Flexible' }
         };
         return translations[type]?.[value] || value || '-';
     }
