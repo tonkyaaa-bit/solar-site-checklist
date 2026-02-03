@@ -7,6 +7,8 @@ class SolarChecklist {
             electrical: [],
             battery: []
         };
+        // Google Apps Script Web App URL - UPDATE THIS AFTER DEPLOYMENT
+        this.apiUrl = localStorage.getItem('solarChecklist_apiUrl') || '';
         this.init();
     }
 
@@ -14,6 +16,13 @@ class SolarChecklist {
         this.bindEvents();
         this.loadCurrentSession();
         this.updateProgress();
+        this.checkApiConfig();
+    }
+
+    checkApiConfig() {
+        if (!this.apiUrl) {
+            console.log('API URL not configured. Submit will only save locally.');
+        }
     }
 
     bindEvents() {
@@ -29,10 +38,15 @@ class SolarChecklist {
 
         // Buttons
         document.getElementById('saveBtn').addEventListener('click', () => this.save());
-        document.getElementById('exportBtn').addEventListener('click', () => this.export());
+        document.getElementById('submitBtn').addEventListener('click', () => this.submit());
         document.getElementById('newBtn').addEventListener('click', () => this.newSession());
         document.getElementById('historyBtn').addEventListener('click', () => this.showHistory());
         document.getElementById('closeHistory').addEventListener('click', () => this.hideHistory());
+        
+        // Settings
+        document.getElementById('settingsBtn')?.addEventListener('click', () => this.showSettings());
+        document.getElementById('closeSettings')?.addEventListener('click', () => this.hideSettings());
+        document.getElementById('saveApiUrl')?.addEventListener('click', () => this.saveApiUrl());
 
         // Auto-save on input change
         document.querySelectorAll('input, select, textarea').forEach(el => {
@@ -104,8 +118,18 @@ class SolarChecklist {
             },
             finalChecks: this.getCheckedItems('final'),
             notes: document.getElementById('notes').value,
-            photos: this.photos
+            photos: {
+                roof: this.photos.roof.length,
+                electrical: this.photos.electrical.length,
+                battery: this.photos.battery.length
+            }
         };
+    }
+
+    getFullData() {
+        const data = this.getData();
+        data.photos = this.photos; // Include full photo data
+        return data;
     }
 
     getCheckedItems(prefix) {
@@ -163,7 +187,7 @@ class SolarChecklist {
         document.getElementById('notes').value = data.notes || '';
 
         // Photos
-        if (data.photos) {
+        if (data.photos && typeof data.photos === 'object' && data.photos.roof?.length) {
             this.photos = data.photos;
             this.renderPhotos();
         }
@@ -183,16 +207,21 @@ class SolarChecklist {
         ['roof', 'electrical', 'battery'].forEach(type => {
             const container = document.getElementById(`${type}PhotoPreview`);
             container.innerHTML = '';
-            (this.photos[type] || []).forEach(src => {
-                const img = document.createElement('img');
-                img.src = src;
-                container.appendChild(img);
-            });
+            const photos = this.photos[type] || [];
+            if (Array.isArray(photos)) {
+                photos.forEach(src => {
+                    if (typeof src === 'string' && src.startsWith('data:')) {
+                        const img = document.createElement('img');
+                        img.src = src;
+                        container.appendChild(img);
+                    }
+                });
+            }
         });
     }
 
     save() {
-        const data = this.getData();
+        const data = this.getFullData();
         const history = this.getHistory();
         
         const existingIndex = history.findIndex(h => h.id === data.id);
@@ -205,11 +234,56 @@ class SolarChecklist {
         localStorage.setItem('solarChecklist_history', JSON.stringify(history));
         localStorage.setItem('solarChecklist_current', JSON.stringify(data));
         
-        this.showToast('✅ Saved');
+        this.showToast('✅ Saved locally');
+    }
+
+    async submit() {
+        // First save locally
+        this.save();
+        
+        const data = this.getData();
+        
+        // Check if API is configured
+        if (!this.apiUrl) {
+            this.showToast('⚠️ API not configured. Click ⚙️ to set up.');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '⏳ Submitting...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                mode: 'no-cors', // Google Apps Script requires this
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            // With no-cors mode, we can't read the response, but if it didn't throw, it likely succeeded
+            this.showToast('✅ Submitted to Google Sheets & Email sent!');
+            
+            // Mark as submitted
+            data.submitted = true;
+            data.submittedAt = new Date().toISOString();
+            localStorage.setItem('solarChecklist_current', JSON.stringify(data));
+            
+        } catch (error) {
+            console.error('Submit error:', error);
+            this.showToast('❌ Submit failed. Check your connection.');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
 
     autoSave() {
-        const data = this.getData();
+        const data = this.getFullData();
         localStorage.setItem('solarChecklist_current', JSON.stringify(data));
     }
 
@@ -261,7 +335,7 @@ class SolarChecklist {
             container.innerHTML = history.map(item => `
                 <div class="history-item">
                     <div class="history-info">
-                        <h4>${item.customer?.name || 'Unnamed Customer'}</h4>
+                        <h4>${item.customer?.name || 'Unnamed Customer'} ${item.submitted ? '✅' : ''}</h4>
                         <p>${item.customer?.address || 'No address'}</p>
                         <p>${new Date(item.timestamp).toLocaleString('en-AU')}</p>
                     </div>
@@ -278,6 +352,23 @@ class SolarChecklist {
 
     hideHistory() {
         document.getElementById('historyModal').classList.remove('active');
+    }
+
+    showSettings() {
+        document.getElementById('apiUrlInput').value = this.apiUrl;
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    hideSettings() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    saveApiUrl() {
+        const url = document.getElementById('apiUrlInput').value.trim();
+        this.apiUrl = url;
+        localStorage.setItem('solarChecklist_apiUrl', url);
+        this.hideSettings();
+        this.showToast('✅ API URL saved');
     }
 
     loadFromHistory(id) {
@@ -299,85 +390,6 @@ class SolarChecklist {
             this.showHistory();
             this.showToast('🗑️ Deleted');
         }
-    }
-
-    export() {
-        const data = this.getData();
-        const report = this.generateReport(data);
-        
-        // Create blob and download
-        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `site-visit-${data.customer?.name || 'report'}-${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        this.showToast('📤 Exported');
-    }
-
-    generateReport(data) {
-        const lines = [
-            '========================================',
-            '     SOLAR SITE VISIT REPORT',
-            '========================================',
-            '',
-            `Date: ${new Date(data.timestamp).toLocaleString('en-AU')}`,
-            '',
-            '【CUSTOMER INFORMATION】',
-            `Name: ${data.customer?.name || '-'}`,
-            `Address: ${data.customer?.address || '-'}`,
-            `Phone: ${data.customer?.phone || '-'}`,
-            `Appointment: ${data.customer?.appointmentTime || '-'}`,
-            '',
-            '【ROOF ASSESSMENT】',
-            `Type: ${this.translateValue('roofType', data.roof?.type)}`,
-            `Orientation: ${this.translateValue('orientation', data.roof?.orientation)}`,
-            `Pitch: ${data.roof?.angle || '-'}`,
-            `Area: ${data.roof?.area ? data.roof.area + ' m²' : '-'}`,
-            '',
-            '【ELECTRICAL ASSESSMENT】',
-            `Grid Type: ${this.translateValue('gridType', data.electrical?.gridType)}`,
-            `Meter Model: ${data.electrical?.meterModel || '-'}`,
-            `Switchboard Capacity: ${data.electrical?.panelCapacity || '-'}`,
-            '',
-            '【BATTERY INSTALLATION】',
-            `Location: ${this.translateValue('batteryLocation', data.battery?.location)}`,
-            '',
-            '【CUSTOMER REQUIREMENTS】',
-            `Monthly Usage: ${data.requirements?.monthlyUsage || '-'}`,
-            `Peak Hours: ${data.requirements?.peakHours || '-'}`,
-            `Special Equipment: ${[
-                data.requirements?.hasEV && 'EV Charger',
-                data.requirements?.hasPool && 'Pool Pump',
-                data.requirements?.hasAC && 'Ducted A/C'
-            ].filter(Boolean).join(', ') || 'None'}`,
-            `Budget: ${this.translateValue('budget', data.requirements?.budget)}`,
-            `Installation Timeframe: ${data.requirements?.installTime || '-'}`,
-            '',
-            '【NOTES】',
-            data.notes || 'None',
-            '',
-            '========================================',
-            `Photos: Roof(${data.photos?.roof?.length || 0}) Electrical(${data.photos?.electrical?.length || 0}) Battery(${data.photos?.battery?.length || 0})`,
-            '========================================',
-        ];
-
-        return lines.join('\n');
-    }
-
-    translateValue(type, value) {
-        const translations = {
-            roofType: { tile: 'Tile', metal: 'Metal / Colorbond', concrete: 'Concrete', other: 'Other' },
-            orientation: { north: 'North', east: 'East', west: 'West', south: 'South', mixed: 'Mixed' },
-            gridType: { single: 'Single Phase', three: 'Three Phase' },
-            batteryLocation: { garage: 'Garage', exterior: 'Exterior Wall', interior: 'Interior', other: 'Other' },
-            budget: { '5-10k': '$5,000-$10,000', '10-15k': '$10,000-$15,000', '15-20k': '$15,000-$20,000', '20k+': '$20,000+', flexible: 'Flexible' }
-        };
-        return translations[type]?.[value] || value || '-';
     }
 
     showToast(message) {

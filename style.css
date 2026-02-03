@@ -492,6 +492,14 @@ body {
     margin-bottom: 12px;
 }
 
+/* Help Text */
+.help-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;
