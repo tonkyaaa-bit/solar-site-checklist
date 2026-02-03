@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solar Site Visit Checklist</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>☀️ Solar Site Visit</h1>
+                <div class="header-actions">
+                    <button class="btn-icon" id="newBtn" title="新建">➕</button>
+                    <button class="btn-icon" id="historyBtn" title="历史记录">📋</button>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0/30 完成</div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main" id="mainContent">
+            <!-- Customer Info Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">👤</span>
+                    <h2>客户信息</h2>
+                </div>
+                <div class="form-group">
+                    <label>客户姓名</label>
+                    <input type="text" id="customerName" placeholder="输入客户姓名">
+                </div>
+                <div class="form-group">
+                    <label>地址</label>
+                    <input type="text" id="address" placeholder="输入地址">
+                </div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" id="phone" placeholder="输入电话">
+                </div>
+                <div class="form-group">
+                    <label>预约时间</label>
+                    <input type="datetime-local" id="appointmentTime">
+                </div>
+            </section>
+
+            <!-- Pre-departure Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">🚗</span>
+                    <h2>出发前准备</h2>
+                </div>
+                <div class="checklist">
+                    <label class="check-item">
+                        <input type="checkbox" data-item="pre1">
+                        <span class="checkmark"></span>
+                        <span class="check-text">确认客户预约时间和地址</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="pre2">
+                        <span class="checkmark"></span>
+                        <span class="check-text">携带测量工具（卷尺、指南针）</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="pre3">
+                        <span class="checkmark"></span>
+                        <span class="check-text">携带相机/手机</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="pre4">
+                        <span class="checkmark"></span>
+                        <span class="check-text">带齐报价资料和产品手册</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="pre5">
+                        <span class="checkmark"></span>
+                        <span class="check-text">检查CRM中客户信息完整性</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Roof Assessment Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">🏠</span>
+                    <h2>屋顶评估</h2>
+                </div>
+                <div class="form-group">
+                    <label>屋顶类型</label>
+                    <select id="roofType">
+                        <option value="">请选择</option>
+                        <option value="tile">瓦片</option>
+                        <option value="metal">金属</option>
+                        <option value="concrete">混凝土</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>屋顶朝向</label>
+                    <select id="roofOrientation">
+                        <option value="">请选择</option>
+                        <option value="north">北 (最佳)</option>
+                        <option value="east">东</option>
+                        <option value="west">西</option>
+                        <option value="south">南</option>
+                        <option value="mixed">混合</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>屋顶倾斜角度</label>
+                    <input type="text" id="roofAngle" placeholder="例如: 22°">
+                </div>
+                <div class="form-group">
+                    <label>可用屋顶面积 (m²)</label>
+                    <input type="number" id="roofArea" placeholder="输入面积">
+                </div>
+                <div class="checklist">
+                    <label class="check-item">
+                        <input type="checkbox" data-item="roof1">
+                        <span class="checkmark"></span>
+                        <span class="check-text">遮挡物评估（树木/烟囱/邻居建筑）</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="roof2">
+                        <span class="checkmark"></span>
+                        <span class="check-text">屋顶状况检查（年龄、维修需求）</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="roof3">
+                        <span class="checkmark"></span>
+                        <span class="check-text">拍摄屋顶照片（多角度）</span>
+                    </label>
+                </div>
+                <div class="photo-upload">
+                    <label class="upload-btn">
+                        📷 上传屋顶照片
+                        <input type="file" accept="image/*" multiple id="roofPhotos" capture="environment">
+                    </label>
+                    <div class="photo-preview" id="roofPhotoPreview"></div>
+                </div>
+            </section>
+
+            <!-- Electrical Assessment Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">⚡</span>
+                    <h2>电气评估</h2>
+                </div>
+                <div class="form-group">
+                    <label>电网类型</label>
+                    <select id="gridType">
+                        <option value="">请选择</option>
+                        <option value="single">单相</option>
+                        <option value="three">三相</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>电表型号</label>
+                    <input type="text" id="meterModel" placeholder="输入电表型号">
+                </div>
+                <div class="form-group">
+                    <label>配电箱容量 (A)</label>
+                    <input type="text" id="panelCapacity" placeholder="例如: 63A">
+                </div>
+                <div class="checklist">
+                    <label class="check-item">
+                        <input type="checkbox" data-item="elec1">
+                        <span class="checkmark"></span>
+                        <span class="check-text">电表位置已确认</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="elec2">
+                        <span class="checkmark"></span>
+                        <span class="check-text">配电箱位置已确认</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="elec3">
+                        <span class="checkmark"></span>
+                        <span class="check-text">现有逆变器检查（如有）</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="elec4">
+                        <span class="checkmark"></span>
+                        <span class="check-text">拍摄电表和配电箱照片</span>
+                    </label>
+                </div>
+                <div class="photo-upload">
+                    <label class="upload-btn">
+                        📷 上传电气照片
+                        <input type="file" accept="image/*" multiple id="electricalPhotos" capture="environment">
+                    </label>
+                    <div class="photo-preview" id="electricalPhotoPreview"></div>
+                </div>
+            </section>
+
+            <!-- Battery Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔋</span>
+                    <h2>Battery 安装位置</h2>
+                </div>
+                <div class="form-group">
+                    <label>安装位置</label>
+                    <select id="batteryLocation">
+                        <option value="">请选择</option>
+                        <option value="garage">车库</option>
+                        <option value="exterior">外墙</option>
+                        <option value="interior">室内</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="checklist">
+                    <label class="check-item">
+                        <input type="checkbox" data-item="bat1">
+                        <span class="checkmark"></span>
+                        <span class="check-text">通风条件良好</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="bat2">
+                        <span class="checkmark"></span>
+                        <span class="check-text">距离配电箱距离合适</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="bat3">
+                        <span class="checkmark"></span>
+                        <span class="check-text">地面平整</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="bat4">
+                        <span class="checkmark"></span>
+                        <span class="check-text">拍摄电池安装位置照片</span>
+                    </label>
+                </div>
+                <div class="photo-upload">
+                    <label class="upload-btn">
+                        📷 上传电池位置照片
+                        <input type="file" accept="image/*" multiple id="batteryPhotos" capture="environment">
+                    </label>
+                    <div class="photo-preview" id="batteryPhotoPreview"></div>
+                </div>
+            </section>
+
+            <!-- Customer Requirements Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">📊</span>
+                    <h2>客户需求</h2>
+                </div>
+                <div class="form-group">
+                    <label>月均用电量 (kWh) 或电费 ($)</label>
+                    <input type="text" id="monthlyUsage" placeholder="例如: 600kWh 或 $200">
+                </div>
+                <div class="form-group">
+                    <label>用电高峰时段</label>
+                    <input type="text" id="peakHours" placeholder="例如: 6PM - 10PM">
+                </div>
+                <div class="form-group">
+                    <label>特殊设备</label>
+                    <div class="checkbox-group">
+                        <label class="inline-check">
+                            <input type="checkbox" id="hasEV"> EV充电器
+                        </label>
+                        <label class="inline-check">
+                            <input type="checkbox" id="hasPool"> 泳池泵
+                        </label>
+                        <label class="inline-check">
+                            <input type="checkbox" id="hasAC"> 中央空调
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>预算范围</label>
+                    <select id="budget">
+                        <option value="">请选择</option>
+                        <option value="5-10k">$5,000 - $10,000</option>
+                        <option value="10-15k">$10,000 - $15,000</option>
+                        <option value="15-20k">$15,000 - $20,000</option>
+                        <option value="20k+">$20,000+</option>
+                        <option value="flexible">灵活</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>期望安装时间</label>
+                    <input type="text" id="installTime" placeholder="例如: 2周内">
+                </div>
+            </section>
+
+            <!-- Final Check Section -->
+            <section class="section">
+                <div class="section-header">
+                    <span class="section-icon">✅</span>
+                    <h2>离开前确认</h2>
+                </div>
+                <div class="checklist">
+                    <label class="check-item">
+                        <input type="checkbox" data-item="final1">
+                        <span class="checkmark"></span>
+                        <span class="check-text">所有照片已保存</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="final2">
+                        <span class="checkmark"></span>
+                        <span class="check-text">与客户确认下一步流程</span>
+                    </label>
+                    <label class="check-item">
+                        <input type="checkbox" data-item="final3">
+                        <span class="checkmark"></span>
+                        <span class="check-text">约定报价提交时间</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="notes" placeholder="其他备注信息..."></textarea>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <div class="actions">
+                <button class="btn btn-primary" id="saveBtn">💾 保存</button>
+                <button class="btn btn-secondary" id="exportBtn">📤 导出报告</button>
+            </div>
+        </main>
+
+        <!-- History Modal -->
+        <div class="modal" id="historyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📋 历史记录</h3>
+                    <button class="btn-close" id="closeHistory">✕</button>
+                </div>
+                <div class="modal-body" id="historyList">
+                    <!-- History items will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
